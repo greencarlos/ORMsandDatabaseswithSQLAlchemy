@@ -19,59 +19,19 @@ loan_book = db.Table(
     db.Column("book_id", db.ForeignKey("books.id"), primary_key=True),
 )
 
+service_tickets_mechanic_history = db.Table(
+        "service_tickets_mechanic_history",
+        Base.metadata,
+        db.Column("mechanic_id", db.ForeignKey("mechanics.id"), primary_key=True),
+        db.Column("service_ticket_id", db.ForeignKey("service_tickets.id"), primary_key=True),
+        )
 
-class Member(Base):
-    __tablename__ = "members"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
-    DOB: Mapped[date] = mapped_column(db.Date)
-    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
-
-    loans: Mapped[List["Loan"]] = db.relationship(back_populates="member")
-
-
-class Loan(Base):
-    __tablename__ = "loans"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    loan_date: Mapped[date] = mapped_column(db.Date)
-    member_id: Mapped[int] = mapped_column(db.ForeignKey("members.id"))
-
-    member: Mapped["Member"] = db.relationship(back_populates="loans")
-    books: Mapped[List["Book"]] = db.relationship(
-        secondary=loan_book, back_populates="loans"
-    )
-
-
-class Book(Base):
-    __tablename__ = "books"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    author: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    genre: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    desc: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    title: Mapped[str] = mapped_column(db.String(255), nullable=False)
-
-    loans: Mapped[List["Loan"]] = db.relationship(
-        secondary=loan_book, back_populates="books"
-    )
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-db = SQLAlchemy(model_class=Base)
-
-
-loan_book = db.Table(
-    "loan_book",
-    Base.metadata,
-    db.Column("loan_id", db.ForeignKey("loans.id"), primary_key=True),
-    db.Column("book_id", db.ForeignKey("books.id"), primary_key=True),
-)
+service_tickets_customer_history = db.Table(
+        "service_tickets_customer_history",
+        Base.metadata,
+        db.Column("member_id", db.ForeignKey("member.id"), primary_key=True),
+        db.Column("service_ticket_id", db.ForeignKey("service_tickets.id"), primary_key=True),
+        )
 
 
 class Member(Base):
@@ -111,4 +71,29 @@ class Book(Base):
     loans: Mapped[List["Loan"]] = db.relationship(
         secondary=loan_book, back_populates="books"
     )
+
+
+class Mechanic(Base):
+    __tablename__ = "mechanics"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
+    DOB: Mapped[date] = mapped_column(db.Date)
+    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
+
+    service_tickets: Mapped[List["service_tickets"]] = db.relationship(back_populates="mechanics")
+
+
+class ServiceTicket(Base):
+    __tablename__ = "service_tickets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    subject: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    description: Mapped[str] = mapped_column(db.String(360), nullable=False)
+    cause: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    resolution: Mapped[str] = mapped_column(db.String(255), nullable=False)
+
+    mechanics: Mapped[List["Mechanic"]] = db.relationship(back_populates="service_tickets")
+    members: Mapped[List["Member"]] = db.relationship(back_populates="service_tickets")
 
