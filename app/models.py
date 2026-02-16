@@ -13,25 +13,25 @@ db = SQLAlchemy(model_class=Base)
 
 
 loan_book = db.Table(
-    "loan_book",
-    Base.metadata,
-    db.Column("loan_id", db.ForeignKey("loans.id"), primary_key=True),
-    db.Column("book_id", db.ForeignKey("books.id"), primary_key=True),
-)
+        "loan_book",
+        Base.metadata,
+        db.Column("loan_id", db.ForeignKey("loans.id"), primary_key=True),
+        db.Column("book_id", db.ForeignKey("books.id"), primary_key=True),
+    )
 
 service_tickets_mechanic_history = db.Table(
         "service_tickets_mechanic_history",
         Base.metadata,
         db.Column("mechanic_id", db.ForeignKey("mechanics.id"), primary_key=True),
         db.Column("service_ticket_id", db.ForeignKey("service_tickets.id"), primary_key=True),
-        )
+    )
 
 service_tickets_customer_history = db.Table(
         "service_tickets_customer_history",
         Base.metadata,
-        db.Column("member_id", db.ForeignKey("member.id"), primary_key=True),
+        db.Column("member_id", db.ForeignKey("members.id"), primary_key=True),
         db.Column("service_ticket_id", db.ForeignKey("service_tickets.id"), primary_key=True),
-        )
+    )
 
 
 class Member(Base):
@@ -44,6 +44,10 @@ class Member(Base):
     password: Mapped[str] = mapped_column(db.String(255), nullable=False)
 
     loans: Mapped[List["Loan"]] = db.relationship(back_populates="member")
+    service_tickets: Mapped[List["ServiceTicket"]] = db.relationship(
+    secondary=service_tickets_customer_history,
+    back_populates="members"
+)
 
 
 class Loan(Base):
@@ -82,7 +86,10 @@ class Mechanic(Base):
     DOB: Mapped[date] = mapped_column(db.Date)
     password: Mapped[str] = mapped_column(db.String(255), nullable=False)
 
-    service_tickets: Mapped[List["service_tickets"]] = db.relationship(back_populates="mechanics")
+    service_tickets: Mapped[List["ServiceTicket"]] = db.relationship(
+        secondary=service_tickets_mechanic_history,
+        back_populates="mechanics"
+    )
 
 
 class ServiceTicket(Base):
@@ -94,6 +101,13 @@ class ServiceTicket(Base):
     cause: Mapped[str] = mapped_column(db.String(255), nullable=False)
     resolution: Mapped[str] = mapped_column(db.String(255), nullable=False)
 
-    mechanics: Mapped[List["Mechanic"]] = db.relationship(back_populates="service_tickets")
-    members: Mapped[List["Member"]] = db.relationship(back_populates="service_tickets")
+    mechanics: Mapped[List["Mechanic"]] = db.relationship(
+        secondary=service_tickets_mechanic_history,
+        back_populates="service_tickets"
+    )
+
+    members: Mapped[List["Member"]] = db.relationship(
+        secondary=service_tickets_customer_history,
+        back_populates="service_tickets"
+    )
 

@@ -1,4 +1,4 @@
-from .schemas import service_ticket_schema, service_ticket_schema
+from .schemas import service_ticket_schema, service_tickets_schema
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
@@ -7,10 +7,10 @@ from typing import List
 from marshmallow import ValidationError
 from datetime import date
 from app.models import ServiceTicket, db
-from . import service_ticket_bp
+from . import service_tickets_bp
 
 
-@service_ticket__bp.route("/", methods=["POST"])
+@service_tickets_bp.route("/", methods=["POST"])
 def create_service_ticket():
     try:
         service_ticket_data = service_ticket_schema.load(request.json)
@@ -25,21 +25,21 @@ def create_service_ticket():
         return jsonify({"error": "id already associated with an account."}), 400
 
     new_service_ticket = ServiceTicket(**service_ticket_data)
-    db.session.add(new_service_ticket))
+    db.session.add(new_service_ticket)
     db.session.commit()
 
     return service_ticket_schema.jsonify(new_service_ticket), 201
 
 
-@service_ticket_bp.route("/", methods=["GET"])
-def get_service_ticket():
+@service_tickets_bp.route("/", methods=["GET"])
+def get_service_tickets():
     query = select(ServiceTicket)
-    service_ticket = db.session.execute(query).scalars().all()
+    service_tickets = db.session.execute(query).scalars().all()
 
-    return service_ticket_schema.jsonify(service_tickets)
+    return service_tickets_schema.jsonify(service_tickets)
 
 
-@service_ticket_bp.route("/<int:service_ticket_id>", methods=["GET"])
+@service_tickets_bp.route("/<int:service_ticket_id>", methods=["GET"])
 def get_service_ticket(service_ticket_id):
     service_ticket = db.session.get(ServiceTicket, service_ticket_id)
 
@@ -48,7 +48,7 @@ def get_service_ticket(service_ticket_id):
     return jsonify({"error": "Service Ticket not found."}), 404
 
 
-@service_ticket_bp.route("/<int:service_ticket_id>", methods=["PUT"])
+@service_tickets_bp.route("/<int:service_ticket_id>", methods=["PUT"])
 def update_service_ticket(service_ticket_id):
     service_ticket = db.session.get(ServiceTicket, service_ticket_id)
 
@@ -78,7 +78,7 @@ def update_service_ticket(service_ticket_id):
     return service_ticket_schema.jsonify(service_ticket), 200
 
 
-@service_ticket_bp.route("/<int:service_ticket_id>", methods=['DELETE'])
+@service_tickets_bp.route("/<int:service_ticket_id>", methods=['DELETE'])
 def delete_service_ticket(service_ticket_id):
     service_ticket = db.session.get(ServiceTicket, service_ticket_id)
 

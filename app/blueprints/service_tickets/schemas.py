@@ -1,5 +1,5 @@
 from app.extensions import ma
-from app.models import Member
+from app.models import ServiceTicket 
 
 class ServiceTicketSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -8,4 +8,4 @@ class ServiceTicketSchema(ma.SQLAlchemyAutoSchema):
 
 
 service_ticket_schema = ServiceTicketSchema()
-service_ticket_schema = ServiceTicketSchema(many=True)
+service_tickets_schema = ServiceTicketSchema(many=True)
