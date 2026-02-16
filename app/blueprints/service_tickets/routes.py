@@ -56,20 +56,19 @@ def update_service_ticket(service_ticket_id):
         return jsonify({"error": "Service Ticket not found"}), 404
 
     try:
-        service_ticket_data = service_ticket_schema.load(request.json)
+        service_ticket_data = service_ticket_schema.load(request.json, partial=True)
     except ValidationError as e:
         return jsonify(e.messages), 400
 
+    service_ticket_data.pop("id", None)
     new_id = service_ticket_data.get("id")
+
     if new_id:
         existing_service_ticket = (
             db.session.execute(select(ServiceTicket).where(ServiceTicket.id == new_id))
             .scalars()
             .first()
         )
-
-    if existing_service_ticket and existing_service_ticket.id != service_ticket:
-        return jsonify({"error": "Id already with another account."}), 400
 
     for key, value in service_ticket_data.items():
         setattr(service_ticket, key, value)
