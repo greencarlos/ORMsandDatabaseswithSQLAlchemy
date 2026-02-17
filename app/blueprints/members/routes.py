@@ -1,4 +1,5 @@
-from .schemas import member_schema, members_schema
+from .schemas import member_schema, members_schema, login_schema
+from app.blueprints.service_tickets import service_tickets_schema  
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
@@ -6,11 +7,43 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from typing import List
 from marshmallow import ValidationError
 from datetime import date
-from app.models import Member, db
+from app.models import Member, ServiceTickets, db
+from app.extensions import limiter, cache, ma
+from app.utils.util import encode_token, token_required
 from . import members_bp
 
 
+@members_bp.route("/login", methods=['POST'])
+@limiter.limit("30 per hour")
+@cache.cached(timeout=60)
+def login():
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+
+    query = select(Member).where(Member.email == email)
+    member = db.session.execute(query).scalars().first()
+
+    if member and member.password == password:
+        token = encode_token(member.id)
+
+        response = {
+                "status" : "success",
+                "message": "successfully logged in",
+                "token": token
+        }
+
+        return jsonify(response), 200
+    else:
+        return jsonify({"message": "Invalid email or password"})
+
+
 @members_bp.route("/", methods=["POST"])
+@limiter.limit("30 per hour")
+@cache.cached(timeout=60)
 def create_member():
     try:
         member_data = member_schema.load(request.json)
@@ -37,6 +70,18 @@ def get_members():
     members = db.session.execute(query).scalars().all()
 
     return members_schema.jsonify(members)
+
+
+@members_bp.route("/my-tickets", methods=['GET'])
+@token_required
+def get_tickets():
+    member = db.session.get(Member, member_id)
+    customer_id = member['id']
+
+    if customer_id:
+        query = select(ServiceTickets).where(service_tickets.id == customer_id)
+        tickets = db.session.execute(query).scalars().all()
+        return service_tickets_schema.jsonify(tickets)
 
 
 @members_bp.route("/<int:member_id>", methods=["GET"])
@@ -79,6 +124,7 @@ def update_member(member_id):
 
 
 @members_bp.route("/<int:member_id>", methods=['DELETE'])
+@token_required
 def delete_member(member_id):
     member = db.session.get(Member, member_id)
 

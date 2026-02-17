@@ -7,10 +7,13 @@ from typing import List
 from marshmallow import ValidationError
 from datetime import date
 from app.models import Mechanic, db
+from app.extensions import limiter, cache, ma
 from . import mechanics_bp
 
 
 @mechanics_bp.route("/", methods=["POST"])
+@limiter.limit("30 per hour")
+@cache.cached(timeout=60)
 def create_mechanic():
     try:
         mechanic_data = mechanic_schema.load(request.json)

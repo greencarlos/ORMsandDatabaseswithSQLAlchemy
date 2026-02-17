@@ -1,4 +1,4 @@
-from .schemas import service_ticket_schema, service_tickets_schema
+from .schemas import service_ticket_schema, service_tickets_schema, mechanic_schema
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
@@ -6,11 +6,14 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from typing import List
 from marshmallow import ValidationError
 from datetime import date
-from app.models import ServiceTicket, db
+from app.models import ServiceTicket, Members, db
+from app.extensions import limiter, cache, ma
 from . import service_tickets_bp
 
 
 @service_tickets_bp.route("/", methods=["POST"])
+@limiter.limit("30 per hour")
+@cache.cached(timeout=60)
 def create_service_ticket():
     try:
         service_ticket_data = service_ticket_schema.load(request.json)
@@ -46,6 +49,21 @@ def get_service_ticket(service_ticket_id):
     if service_ticket:
         return service_ticket_schema.jsonify(service_ticket), 200
     return jsonify({"error": "Service Ticket not found."}), 404
+
+
+@service_tickets_bp.route("/<int:service_ticket_id>/edit", methods=['PUT'])
+def remove_mechanic(remove_ids, add_ids):
+
+    try:
+        mechanic_data = mechanic_schema.load(request.json)
+        page = int(request.args.get('page'))
+        per_page = int(request.args.get('per_page'))
+        query = select(ServiceTicket)
+        service_ticket = db.paginate(query, page=page, per_page=per_page)
+    except:
+        query = select(ServiceTicket)
+        service_ticket = db.session.execute(query).scalars().all()
+        return service_ticket_schema.jsonify(service_ticket), 200
 
 
 @service_tickets_bp.route("/<int:service_ticket_id>", methods=["PUT"])

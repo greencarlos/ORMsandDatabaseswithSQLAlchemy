@@ -33,6 +33,13 @@ service_tickets_customer_history = db.Table(
         db.Column("service_ticket_id", db.ForeignKey("service_tickets.id"), primary_key=True),
     )
 
+mechanic_service_ticket = db.Table(
+        'service_mechanics',
+        Base.metadata,
+        db.Column("ticket_id", db.ForeignKey("service_tickets.id")),
+        db.Column("mechanic_id", dbForeignKey("mechanic.id"))
+    )
+
 
 class Member(Base):
     __tablename__ = "members"
@@ -81,10 +88,12 @@ class Mechanic(Base):
     __tablename__ = "mechanics"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
-    DOB: Mapped[date] = mapped_column(db.Date)
-    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    name: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    email: Mapped[str] = mapped_column(db.String(160), nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(db.String(150), nullable=False, unique=True)
+    salary: Mapped[float] = mapped_column(db.Float(), nullable=False)
+
+    mechanic_tickets: mapped[List["MechanicServiceTicket"]] = db.relationship(back_populates="mechanic")
 
     service_tickets: Mapped[List["ServiceTicket"]] = db.relationship(
         secondary=service_tickets_mechanic_history,
@@ -96,10 +105,10 @@ class ServiceTicket(Base):
     __tablename__ = "service_tickets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    subject: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    VIN: Mapped[int] = mapped_column(db.Float(), nullable=False)
     description: Mapped[str] = mapped_column(db.String(360), nullable=False)
-    cause: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    resolution: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    service_data: Mapped[date]
+    customer_id: Mapped[int] = mapped_column(db.ForeignKey("customers.id"), nullable=False)
 
     mechanics: Mapped[List["Mechanic"]] = db.relationship(
         secondary=service_tickets_mechanic_history,
@@ -111,3 +120,14 @@ class ServiceTicket(Base):
         back_populates="service_tickets"
     )
 
+
+class MechanicServiceTicket(Base):
+    __tablename__ = "MechanicServiceTicket"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mechanic_id: Mapped[int] = mapped_column(db.ForeignKey("mechanics.id"), nullable=False)
+    service_id: Mapped[int] = mapped_column(db.ForeignKey("service_tickets.id"), nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False, default=datetime.ufcnow)
+
+    mechanic: mapped["Mechanic"] = db.relationship(back_populates="mechanic_tickets")
+    service_ticket: mapped["ServiceTicket"] = db.relationship(back_populates="mechanic_tickets")
