@@ -1,5 +1,5 @@
 from .schemas import member_schema, members_schema, login_schema
-from app.blueprints.service_tickets import service_tickets_schema  
+from app.blueprints.service_tickets.schemas import service_tickets_schema  
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from typing import List
 from marshmallow import ValidationError
 from datetime import date
-from app.models import Member, ServiceTickets, db
+from app.models import Member, ServiceTicket, db
 from app.extensions import limiter, cache, ma
 from app.utils.util import encode_token, token_required
 from . import members_bp
