@@ -1,0 +1,8 @@
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.5
+SQLAlchemy==2.0.21
+mysql-connector-python==8.0.34
+Flask-Limiter==2.8.0
+Flask-Caching==2.0.2
+marshmallow==3.21.1
+gunicorn==21.2.0
