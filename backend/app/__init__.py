@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from jose import jwt
 from urllib.request import urlopen
@@ -23,7 +23,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
         )
 
 
-@app.route("/protected", methods=["GET"])
+# @app.route("/protected", methods=["GET"])
 @token_required
 def protected(payload):
     return jsonify({"message": "You access a protected route!", "user": payload})
